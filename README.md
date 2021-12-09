@@ -12368,3 +12368,102 @@ RTXT;
 ?>
 
 
+	
+	
+	////////////////////////////////////////////////////////////////////
+	
+	
+	
+	
+	  // fun = function(){
+    //     $(#Rest_na).prop('checked', false);
+    //   }
+    
+
+    //  $(document).on('dblclick','.cl',function(){
+    //    if(this.checked){
+    //       $(this).prop('checked', false);
+    //     }
+    //   });
+     
+
+     $(document).on('dblclick',)
+
+     $(document).on('dblclick','.`{$x}`_lbl',function(){
+               $('#Out_on').prop('checked',false);
+           });
+
+          
+    // $(document).on('dblclick',.cl,function(){
+    //    var p = $('label.leftRadius').prop('for');
+    //     if()
+    // }); 
+    
+    // $(document).on('dblclick','#check_parking',function(){
+    //   $('this').prop('checked',false);
+    //    });
+
+      //  $(document).on('dblclick','.chkbtn',function(){
+      //   $('#check_parking').prop('checked',false);
+      //    });
+
+	
+	
+	
+	
+	/////////////////////////////////////////////////////////////////////////
+	
+	
+	
+	
+	
+	<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+</head>
+<body>
+      <input id="Out_on" class="pp" name="isOutdoorSittingAvail" type="radio" value="1" />
+      <label for="Out_on" id="Out_on_lbl" onclick="" class="leftRadius">yes</label>
+<br><br><br>
+
+      <label class="chkbtn">Yes
+        <input type="radio" value="1" id="check_parking" name="isParkingAvail">
+        <span class="checkmark"></span>
+      </label>
+      
+      <label class="chkbtn">No
+        <input type="radio" value="0" id="check_parking" name="isParkingAvail">
+        <span class="checkmark"></span>
+      </label>
+
+
+      <script>
+    //   $(document).on('dblclick','#Out_on',function(){
+    //        if($('input.pp').checked){
+    //            $('input.pp').prop('checked',false);
+    //        }
+    //    });
+
+    //    $(document).on('dblclick','.Out_on_lbl',function(){
+    //            console.log(this.val());
+    //        });
+          
+    // $(document).on('dblclick','#Out_on_lbl',function(){
+    //            $('#Out_on').prop('checked',false);
+    //        });
+
+
+    $(document).on('dblclick','.chkbtn',function(){
+        $('#check_parking').prop('checked',false);
+         });
+
+      </script>
+</body>
+</html>
+
+
