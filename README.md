@@ -10525,4 +10525,1846 @@ $(document).on("click","#real_tr,#street_control,#realv_trig",function(event){
 
 } 
 /* End Real View*/
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+<?php
+$css = file_get_contents(_CSS_."/place.css");
+if (!empty($_REQUEST['lat']) && !empty($_REQUEST['lng']) && !empty($_REQUEST['placeParam'])) 
+{
+    $lat = strip_tags($_REQUEST['lat']);
+    $lng = strip_tags($_REQUEST['lng']);
+    $user_added_places = strip_tags($_REQUEST['placeParam']);
+    $reqtype=strip_tags($_REQUEST['type']);
+
+    $user_added_place = explode("|", $user_added_places);
+    $formatted_address = $user_added_place[19];
+    $eloc = $user_added_place[17];
+    $dotCount = explode('.', $formatted_address);
+    if (count($dotCount) > 0)
+    {
+        $formatted_address = explode('.', $formatted_address)[0];
+    }
+
+    if ($eloc == '') 
+    {
+        $user_added_places = '|||||||||||||||||||';
+        $user_added_place = explode("|", $user_added_places);
+        $formatted_address = '';
+    }
+
+    $houseNumber = $user_added_place[0];
+    $houseName = $user_added_place[1];
+    $poi = $user_added_place[2];
+    $poi_id = $user_added_place[3];
+    $street = $user_added_place[4];
+    $street_dist = $user_added_place[5];
+    $subSubLocality = $user_added_place[6];
+    $subLocality = $user_added_place[7];
+    $locality = $user_added_place[8];
+    $village = $user_added_place[9];
+    $District = $user_added_place[10];
+    $subDistrict = $user_added_place[11];
+    $city = $user_added_place[12];
+    $state = $user_added_place[13];
+    $pincode = $user_added_place[14];
+    $type = $user_added_place[15];
+    $remarks = $user_added_place[16];
+    $place_dist = $user_added_place[18];
+    $nearby='';
+    $rating='';
+    if($poi && $place_dist) $nearby=  "'".$place_dist.' m away from '. $poi."'";
+
+    $citydistrval = '';
+    $streetlocval = '';
+    if ($locality == '' && $street != '') 
+    {
+        $streetlocval = $street;
+    } 
+    else 
+    {
+        $streetlocval = $locality;
+    }
+
+    if ($District == '' && $city != '') 
+    {
+        $citydistrval = $city;
+    }
+    if ($District == '' && $city == '' && $subDistrict != '') 
+    {
+        $citydistrval = $subDistrict;
+    }
+
+  $url_d= exploreApi_v21."categories";#die(exploreApi_v3);
+  
+    #$param=exploreParam."&q=524";
+    #$response_call=globals::curl('post',exploreApi_v3,$param);
+    $response_call=globals::curlWithHeader('get','',$url_d,'','','');
+  $json=json_decode(json_encode($response_call), true);
+  #print_r($json);die($url_d);
+  $cat_arr = [];
+    if($r_type == 'Business'){
+        foreach ($json['response'] as $key => $value) {
+            if($value['parentName'] != "Residential")
+            {
+                array_push($cat_arr,$value);
+            }
+        }
+    }else{
+        $cat_list = $json['response']; 
+    }
+
+
+    $html = '<style>'.$css.'</style><div id="myModal" class="modal add-place-modal fade in" role="dialog" style="display:block">
+        <div class="modal-dialog">
+
+      <!-- Modal content-->
+          <div class="modal-content">
+            <div class="modal-header">
+            <button type="button" class="close addp-back-btn" data-dismiss="modal">&times;</button>
+            <h4 class="modal-title">Add a '.$r_type.'';
+            if($r_type=='Business'){
+              $html.='<div class="businessTooltip">
+                <div class="infoBox">
+                  <a class="infoInfo">
+                  <img src="covid19/corona/info_black.png" alt="">
+                  </a>
+                </div>
+                  <div class="businessTextLayer" style="display: none;">
+                    <div class="bsbenifits">
+                      <h4>Benefits:</h4>
+                      <ul class="bsftlist">
+                        <li>Customers can look up the added place on MapmyIndia <span><img style="width:40px;" src="images/ic_move_benifits.png"></span> and other products</li>
+                        <li>Customers can check for updates on the added place via MapmyIndia <span><img style="width:40px;" src="images/ic_move_benifits.png"></span> and other products</li>
+                        <li>Owner can claim their business <strong style="font-weight: 700;">(coming soon)</strong></li>
+                      </ul>
+                    </div>                   
+                  </div>
+              </div>';
+            }
+            $html .= '</h4>
+            
+            </div>
+            <div class="modal-body">
+                <div class="addp-thank-main" style="display:none">
+              <div class="addp_thank_sec text-center">
+              <h2>Thank you</h2>
+                    <p>for your contribution to MapmyIndia Maps</p>
+                    <div class="addp_congrats">
+                        <i class="fa fa-smile-o"></i>
+                        <p>Congratulations</p>
+                    </div>
+                    <div class="addp_get_eloc">
+                        <p>eLoc for your added '.$r_type.' is</p>
+                        <strong> </strong>
+                        <div class="th-eloc-value">
+                            <i class="material-icons lhid">link</i> 
+                            <span onclick="$(\'#addpshare\').click()"></span>
+                        </div>
+                    </div>
+                    <div class="addp_user_try">
+                        <ul class="nav nav-pills addp-nav-pills">
+                            <li><a id="addptry" style="display:inline-block;" href="javascript:void(0)">Try it now</a></li>
+                            <li><a id="addpshare" style="display:inline-block;">Share</a></li>
+                            <li><a id="addpanother" onclick="maps.add_place(\''.($r_type=='Business' ? strtolower($_type) : '').'\');return false;" style="display:inline-block;" href="">Add Another</a></li>  
+                        </ul>
+                       
+                    </div>
+                    <div class="addp-btm-p">
+                        <p>Feel free to share this with your friends &amp; co-workers</p>
+                        <p id="addpstat"></p>
+                        <p>Please note that this submission will be professionally validated by our Map Data Team.</p>
+                        <p>Learn more about MapmyIndia <a href="http://www.mapmyindia.com/eloc/" target="_blank" style="color: #d26d00;text-decoration: underline;">eLoc</a></p>
+                    </div>
+                </div>
+            </div>
+                <div class="add-place-main">
+                <div class="panel-group" id="accordion">
+                <div class="panel panel-default">
+                  <div class="panel-heading">
+                  <h4 class="panel-title">
+                    <a data-toggle="collapse" data-parent="#accordion" href="#colBasic" class="panal-box" id="basicClk" onclick=" debugger; handlecollapse(this); if ($(this).hasClass(\'collapsed\')){$(\'.panal-box i\').html(\'keyboard_arrow_down\');$(this).find(\'i\').html(\'keyboard_arrow_up\');}else{$(this).find(\'i\').html(\'keyboard_arrow_down\')}">
+                      <span>Basic</span>
+                      <i class="material-icons">keyboard_arrow_up</i>
+                    </a>
+                  </h4>
+                  </div>
+                  <div id="colBasic" class="panel-collapse collapse in">
+                    <div class="panel-body">
+                        <div class="add-place-item">
+                        <form>
+                          <!--div class="form-group">
+                            <label>Category<sup>*</sup></label>
+                            
+                            <div class="check-radio-btn-main clearfix">
+                              
+                              <label class="radbtn">Residential
+                                <input type="radio" id="addp_res" name="cat_option" value=0 checked>
+                                  <span class="checkmark"></span>
+                              </label>
+                              
+                              <label class="radbtn">Non Residential
+                                <input type="radio" id="addp_nonres" name="cat_option" value=1>
+                                  <span class="checkmark"></span>
+                              </label>
+                              
+                            </div>
+                            
+                           </div-->
+                           <div class="form-group">
+                             <label>'.$r_type.' Category<sup>*</sup></label>
+                             <div class="time-digit">
+                             <i class="material-icons">keyboard_arrow_down</i>
+                              <input class="form-control select-bus-type" id="cat_int" list="categories" placeholder="Select Category" onkeyup="categoryFilter()" autocomplete="off"> 
+                                          <ul id="categories" class="form-control-ul mas_categories" data-user="'.$r_type.'" name="Category" size="1" style="display:none"> ';
+                                            if($r_type=='Business'){
+                                                                    for($i=0;$i<count($cat_arr);$i++)
+                                                {
+                                                  #print_r($json['response']);die;
+                                                  $cat = $cat_arr[$i];
+                                                    $html.='<li name="cat" data-cnt="'.$i.'" id="'.trim($cat['parentCode']).'" value="'.trim(str_replace("&", "and", str_replace(" ", "-", $cat['parentName']))).'" onclick="selectliCat(\''.trim(str_replace("&", "and", str_replace(" ", "-", $cat['parentName']))).'\')">'.trim(str_replace("&", "and", str_replace(" ", "-", $cat['parentName']))).'</li>';
+                                                }
+                                                              }else{  
+                                                for($i=0;$i<count($cat_list);$i++)
+                                                {
+                                                  #print_r($json['response']);die;
+                                                  $cat = $cat_list[$i];
+                                                    $html.='<li name="cat" data-cnt="'.$i.'" id="'.trim($cat['parentCode']).'" value="'.trim(str_replace("&", "and", str_replace(" ", "-", $cat['parentName']))).'" onclick="selectliCat(\''.trim(str_replace("&", "and", str_replace(" ", "-", $cat['parentName']))).'\')">'.trim(str_replace("&", "and", str_replace(" ", "-", $cat['parentName']))).'</li>';
+                                                }
+                                            }
+                               $html .= '</ul>
+                             </div>
+                             <div class="error-enter-label errlbluplcoption" id="errlbluplcoption"></div>
+                           </div>
+                                                        <div class="form-group show_name_subcat" style="display:none">
+                                                         <label>Sub-Category</label>
+                                                         <div class="time-digit">
+                                                             <select class="form-control sub_categories" name="subCategory" size="1">
+                                                                <option value="" disabled="disabled">Select Subcategory</option>
+                                                             </select>
+                                                         </div>
+                            </div>
+                            
+                            <div class="form-group show_name_subcat" style="display:none">
+                              <label id="lblplace_name">'.$r_type.' Name<sup>*</sup></label>
+                              <input type="text" name="place_name" class="form-control" id="uplace_name" placeholder="Enter place name" autocomplete="off" onkeyup="removeErrLabels()">
+                              <div class="error-enter-label" id="errlbluplcnme"></div>
+                            </div>
+
+                                                        <div class="form-group">
+                            <label id="lblulineloc">Search for location<sup>*</sup></label>
+                            <input type="text" id="nearbyland" name="place_nearbyland" class="form-control" placeholder="eg: 237, Okhla Industrial Estate Phase 3" onkeyup="removeErrLabels()" onclick="$(this).attr(\'placeholder\',\'\')">
+                            <div class="error-enter-label errlbluplloc" id="errlbluplloc"></div>
+
+                          </div>
+                          <div class="form-group">
+                            <div class="mark-location-trig">
+                              <div class="overlay-map"></div>
+                                        <div class="addp-map-pic">
+                                            <img src="images/report_dum.jpg" alt="" />
+                                        </div>
+                              <button class="btn btn-default mark-loc-btn" id="markLoc" onclick="$(\'#modal_new\').hide();">Mark location on Map</button>
+                              <div class="mark-location-bg"></div>
+                            </div>
+                           </div>
+                           <div class="form-group">
+                            <label>Popularly known as</sup></label>
+                            <input type="text" name="place_popular" class="form-control" placeholder="Add nickname for location" autocomplete="off">
+                           </div>
+                        </form>
+                      </div>
+                      </div>
+                  </div>
+                </div>
+                <div class="panel panel-default" id="addAddressBlock" style="display:none">
+                  <div class="panel-heading">
+                  <h4 class="panel-title">
+                    <a data-toggle="collapse" class="panal-box" data-parent="#accordion" href="#colAddress" id="addressClk" onclick="handlecollapse(this); if ($(this).hasClass(\'collapsed\')){$(\'.panal-box i\').html(\'keyboard_arrow_down\');$(this).find(\'i\').html(\'keyboard_arrow_up\');}else{$(this).find(\'i\').html(\'keyboard_arrow_down\')}">
+                      <span>Address</span>
+                      <i class="material-icons">keyboard_arrow_up</i>
+                    </a>
+                  </h4>
+                  </div>
+                  <div id="colAddress" class="panel-collapse collapse in">
+                    <div class="panel-body">
+                      <div class="add-place-item">
+                          <form>
+                            <div class="form-group">
+                              <label>Building no</label>
+                              <input type="text" class="form-control" name="place_building" placeholder="Add Building no" autocomplete="off">
+                             </div>
+                            <div class="form-group">
+                              <label>Floor no</label>
+                              <input type="text" class="form-control" name="place_floor" placeholder="Add Floor no" autocomplete="off">
+                             </div>
+                            <div class="form-group">
+                              <label>Street Name</label>
+                              <input type="text" class="form-control" name="place_street" placeholder="Add Street Name" autocomplete="off">
+                             </div>
+                            <div class="form-group">
+                              <label>Locality/Village</label>
+                              <input type="text" class="form-control" name="place_locality" placeholder="Add Locality/Village" value=\'' . $streetlocval . '\' autocomplete="off">
+                             </div>
+                            <div class="form-group">
+                              <label>City/District</label>
+                              <input type="text" class="form-control" name="place_district" placeholder="Add City/District" value=\'' . $citydistrval . '\' autocomplete="off">
+                             </div>
+                            <div class="form-group">
+                              <label>State<sup>*</sup></label>
+                              <input type="text" class="form-control" name="place_state" placeholder="Add State"  value=\'' . $state . '\' autocomplete="off">
+                             </div>
+                            <div class="form-group">
+                              <label>Pincode<sup>*</sup></label>
+                              <input type="text" class="form-control" name="place_pincode" placeholder="Add Pincode" value=\'' . $pincode . '\'>
+                             </div>
+                             <input  type="hidden" name="place_city" id="place_city" value=\'' . $citydistrval . '\'>
+                               <input  type="text" hidden="" name="place_lat" id="place_lat" value=\'' . $lat . '\'>
+                               <input  type="hidden" name="place_lon" id="place_lon" value=\'' . $lng . '\'>
+                          </form>
+                        </div>
+                      </div>
+                  </div>
+                </div>
+                <div class="panel panel-default" id="addContactBlock" style="display:none">
+                  <div class="panel-heading">
+                  <h4 class="panel-title">
+                    <a data-toggle="collapse" class="panal-box" data-parent="#accordion" href="#colContact" id="contactClk" onclick="handlecollapse(this); if ($(this).hasClass(\'collapsed\')){$(\'.panal-box i\').html(\'keyboard_arrow_down\');$(this).find(\'i\').html(\'keyboard_arrow_up\');}else{$(this).find(\'i\').html(\'keyboard_arrow_down\')}">
+                      <span>Contact</span>
+                      <i class="material-icons">keyboard_arrow_up</i>
+                    </a>
+                  </h4>
+                  </div>
+                  <div id="colContact" class="panel-collapse collapse in">
+                  <div class="panel-body">
+                      <div class="add-place-item">
+                      <form>
+                        <div class="form-group">
+                          <label id="lblulinephn">Phone no</label>
+                          <input type="text" class="form-control" id="uapphn" name="place_phoneno" placeholder="eg: 011-44557659, 9876543210" autocomplete="off">
+                          <div class="error-enter-label" id="uaperrlblphn"></div>
+                         </div>
+                         <div class="form-group">
+                          <label id="uaplblulinefax">Fax</label>
+                          <input type="text" class="form-control" placeholder="eg: +915622602098,+917314801148" name="place_fax" id="uapfax" autocomplete="off">
+                            <div class="error-enter-label" id="uaperrlblfax"></div>
+                          </div>
+                        <div class="form-group">
+                          <label>Website</label>
+                          <input type="text" class="form-control" placeholder="eg: www.mapmyindia.com" name="place_website" id="uapwebst" autocomplete="off">
+                         </div>
+                        <div class="form-group">
+                          <label id="uaplblulineemail">Email</label>
+                          <input type="text" class="form-control" id="uapemail" name="place_email" placeholder="eg: xyz.12@redmail.com,abc@gmail.com" autocomplete="off">
+                          <div class="error-enter-label" id="uaperrlblemail"></div>
+                         </div>
+                        <!--div class="form-group">
+                          <label>Open hours <span>(timings would help customers know when to visit)</span></label>
+                          <input type="text" class="form-control" placeholder="Type Locality/Village" value="Feb Mon-Fri 10:30-16:00">
+                         </div-->
+                        <div class="form-group" id="openhrs_data" style="display:none">
+                          <label>Opening Hours</label>
+                          <div class="hour-sec">
+                                    <div class="pull-left text-left">
+                                        <label class="radio-inline" style="margin-top: 0;">
+                                            <input type="radio" id="selectedhours" name="open_hours" value="open during selected hours" >open during selected hours
+                                        </label>
+                                        <label class="radio-inline">
+                                            <input type="radio" name="open_hours" value="open always">open always
+                              </label>
+                              <label class="radio-inline lasts-radio">
+                                            <input type="radio" name="open_hours" value="none">none
+                                        </label>
+                                    </div>
+                            <!--div id="operatingtimesdiv" style="display:none;" ></div-->
+                            <div id="operatingtimesdiv" style="display:none;">
+                                        
+                                    </div>
+                                    <div id="openhoursdiv" style="display:none;">
+                                      <a href="javascript:void(0)" id="aopenhours">
+                                        <i class="material-icons">add</i> 
+                                        <span>Add Hours</span>
+                                      </a>
+                                    </div>
+                                    <div id="openingdays" class="clearfix" style="display:none;">
+                                          <div class="bus-app-block">
+                                              <a href="javascript:void(0)" class="add-hrs-close" onclick="addHrsClose(this);">
+                                                  <i class="material-icons">close</i>
+                                              </a>
+                                              <dl class="dropdown">
+                                                  <dt>
+                                                  <a href="javascript:void(0)" class="btn-select-days">
+                                                      <span class="hida">Opening days</span>
+                                                      <span class="caret"></span>
+                                                      <p class="multiSel"></p>
+                                                  </a>
+                                                  </dt>
+                                                  <dd>
+                                                      <div class="mutliSelect">
+                                                          <ul>
+                                                            <li class="A1">
+                                          <div class="check-radio-btn-main check-open-hours clearfix">
+                                            <label class="chkbtn">Select All
+                                            <input type="checkbox" name="Dayss[]" class="dayscheck" onclick="select_allDays(this);" value="all" id="Select_all">
+                                            <span class="checkmark"></span>
+                                            </label>
+                                          </div>
+                                        </li>
+                                                              <li>
+                                                                  <div class="check-radio-btn-main check-open-hours clearfix">
+                                            <label class="chkbtn">Sunday
+                                              <input type="checkbox" name="Days[]" class="dayscheck" value="Sun" id="Sunday">
+                                              <span class="checkmark"></span>
+                                            </label>
+                                          </div>
+                                                              </li>
+                                                              <li>
+                                                                  <div class="check-radio-btn-main clearfix">
+                                            <label class="chkbtn">Monday
+                                              <input type="checkbox" name="Days[]" class="dayscheck" value="Mon" id="Monday">
+                                              <span class="checkmark"></span>
+                                            </label>
+                                          </div>
+                                                              </li>
+                                                              <li>
+                                                                  <div class="check-radio-btn-main check-open-hours clearfix">
+                                            <label class="chkbtn">Tuesday
+                                              <input type="checkbox" name="Days[]" class="dayscheck" value="Tues" id="Tuesday">
+                                              <span class="checkmark"></span>
+                                            </label>
+                                          </div>
+                                                              </li>
+                                                              <li>
+                                                                  <div class="check-radio-btn-main clearfix">
+                                            <label class="chkbtn">Wednesday
+                                              <input type="checkbox" name="Days[]" class="dayscheck" value="Wed" id="Wednesday">
+                                              <span class="checkmark"></span>
+                                            </label>
+                                          </div>
+                                                              </li><li>
+                                                                  <div class="check-radio-btn-main check-open-hours clearfix">
+                                            <label class="chkbtn">Thursday
+                                              <input type="checkbox" name="Days[]" class="dayscheck" value="Thurs" id="Thursday">
+                                              <span class="checkmark"></span>
+                                            </label>
+                                          </div>
+                                                              </li>
+                                                              <li>
+                                                                  <div class="check-radio-btn-main clearfix">
+                                            <label class="chkbtn">Friday
+                                              <input type="checkbox" name="Days[]" class="dayscheck" value="Fri" id="Friday">
+                                              <span class="checkmark"></span>
+                                            </label>
+                                          </div>
+                                                              </li>
+                                                              <li>
+                                                                  <div class="check-radio-btn-main clearfix">
+                                            <label class="chkbtn">Saturday
+                                              <input type="checkbox" name="Days[]" class="dayscheck" value="Sat" id="Saturday">
+                                              <span class="checkmark"></span>
+                                            </label>
+                                          </div>
+                                                              </li>
+                                                          </ul>
+                                                      </div>
+                                                  </dd>
+                                              </dl>
+                                              <div class="add-hrs-sec">
+                                                  <select class="timeSelectopen opent timeselectionBtn" > </select>-<select class="timeSelectclose closet timeselectionBtn" > </select>
+                                                  <div class="check-radio-btn-main clearfix" style="margin-top: 10px;">
+                                    <label class="chkbtn"> Open 24 Hours
+                                        <input type="checkbox" name="total[]" class="24hours" value="24hours" id="24-hrs">
+                                        <span class="checkmark"></span>
+                                    </label>
+                                                  </div>
+                                              </div>
+                                          </div>
+                                      </div>
+                                  </div>
+                          <!--a href="javascript:void(0)" class="add-more-link" onclick="$(\'.add-hours-main,.add-place-cncel,.add-place-del\').show();$(\'.add-place-main,.add-place-btn,.add-hours-body\').hide();$(\'input:checkbox[name=weekday]\').removeAttr(\'checked\');">
+                            <i class="material-icons">add</i>
+                            <span>Add more hours</span>
+                          </a-->
+                         </div>
+                      </form>
+                    </div>
+                  </div>
+                  </div>
+                </div>
+        
+                <div class="panel panel-default" id="addInfoBlock" style="display:none">
+                  <div class="panel-heading">
+                  <h4 class="panel-title">
+                    <a data-toggle="collapse" class="panal-box" data-parent="#accordion" href="#colAddMore" id="addMoreClk" onclick="handlecollapse(this); if ($(this).hasClass(\'collapsed\')){$(\'.panal-box i\').html(\'keyboard_arrow_down\');$(this).find(\'i\').html(\'keyboard_arrow_up\');}else{$(this).find(\'i\').html(\'keyboard_arrow_down\')}">
+                    <span>Add more info</span>
+                      <i class="material-icons">keyboard_arrow_down</i>
+                    </a>
+                  </h4>
+                  </div>
+                  <div id="colAddMore" class="panel-collapse collapse">
+                  <div class="panel-body">
+                        <div class="add-place-item check-btn-add-more">
+                        
+                          <div class="form-group" id="amenities_main">
+                            <label>Amenities</label>
+                            <div class="amenities-main">
+                              <div class="amenities-row clearfix">
+                                
+                                <div class="amenities-item switch-toggle switch-3 switch-candy restAm" id="check_amenities" >
+                                  <h5>Outdoor seating</h5>
+                                  <input id="Out_on" name="isOutdoorSittingAvail" type="radio" value="1"/>
+                                  <label for="Out_on" onclick="" class="leftRadius">Yes</label>
+
+                                  <input id="Out_na" name="isOutdoorSittingAvail" type="radio" value="2"/>
+                                  <label for="Out_na" class="disabled" onclick="">Maybe</label>
+
+                                  <input id="Out_off" name="isOutdoorSittingAvail" type="radio" value="0"/>
+                                  <label for="Out_off" onclick="" class="rightRadius">No</label>
+                                </div>
+                                <div class="amenities-item switch-toggle switch-3 switch-candy restAm" id="check_amenities">
+                                  <h5>Delivery</h5>
+                                  <input id="Del_on" name="isDeliveryAvail" type="radio" value="1"/>
+                                  <label for="Del_on" onclick="" class="leftRadius">Yes</label>
+
+                                  <input id="Del_na" name="isDeliveryAvail" type="radio" value="2"/>
+                                  <label for="Del_na" class="disabled" onclick="">Maybe</label>
+
+                                  <input id="Del_off" name="isDeliveryAvail" type="radio" value="0"/>
+                                  <label for="Del_off" onclick="" class="rightRadius">No</label>
+                                </div>
+                                <div class="amenities-item switch-toggle switch-3 switch-candy hotelsAm restAm" id="check_amenities">
+                                  <h5>Restroom </h5>
+                                  <input id="Rest_on" name="isRestroomAvail" type="radio" value="1"/>
+                                  <label for="Rest_on" onclick="" class="leftRadius">Yes</label>
+
+                                  <input id="Rest_na" name="isRestroomAvail" type="radio" value="2"/>
+                                  <label for="Rest_na" class="disabled" onclick="">Maybe</label>
+
+                                  <input id="Rest_off" name="isRestroomAvail" type="radio" value="0"/>
+                                  <label for="Rest_off" onclick="" class="rightRadius">No</label>
+                                </div>
+                                <div class="amenities-item switch-toggle switch-3 switch-candy restAm" id="check_amenities">
+                                  <h5>Alcohol served</h5>
+                                  <input id="Alc_on" name="isAlcoholServed" type="radio" value="1"/>
+                                  <label for="Alc_on" onclick="" class="leftRadius">Yes</label>
+
+                                  <input id="Alc_na" name="isAlcoholServed" type="radio" value="2"/>
+                                  <label for="Alc_na" class="disabled" onclick="">Maybe</label>
+
+                                  <input id="Alc_off" name="isAlcoholServed" type="radio" value="0"/>
+                                  <label for="Alc_off" onclick="" class="rightRadius">No</label>
+                                </div>
+                                <div class="amenities-item switch-toggle switch-3 switch-candy restAm" id="check_amenities">
+                                  <h5>Pure Veg</h5>
+                                  <input id="Pur_on" name="isPureVeg" type="radio" value="1"/>
+                                  <label for="Pur_on" onclick="" class="leftRadius">Yes</label>
+
+                                  <input id="Pur_na" name="isPureVeg" type="radio" value="2"/>
+                                  <label for="Pur_na" class="disabled" onclick="">Maybe</label>
+
+                                  <input id="Pur_off" name="isPureVeg" type="radio" value="0"/>
+                                  <label for="Pur_off" onclick="" class="rightRadius">No</label>
+                                </div>
+                                <div class="amenities-item switch-toggle switch-3 switch-candy hotelsAm restAm" id="check_amenities">
+                                  <h5>Smoking zone</h5>
+                                  <input id="Smok_on" name="isSmokingZoneAvail" type="radio" value="1"/>
+                                  <label for="Smok_on" onclick="" class="leftRadius">Yes</label>
+
+                                  <input id="Smok_na" name="isSmokingZoneAvail" type="radio" value="2"/>
+                                  <label for="Smok_na" class="disabled" onclick="">Maybe</label>
+
+                                  <input id="Smok_off" name="isSmokingZoneAvail" type="radio"  value="0"/>
+                                  <label for="Smok_off" onclick="" class="rightRadius">No</label>
+                                </div>
+                                <div class="amenities-item switch-toggle switch-3 switch-candy hotelsAm restAm" id="check_amenities">
+                                  <h5>Wheelchair Access</h5>
+                                  <input id="Wheel_on" name="isWheelchairAccess" type="radio" value="1"/>
+                                  <label for="Wheel_on" onclick="" class="leftRadius">Yes</label>
+
+                                  <input id="Wheel_na" name="isWheelchairAccess" type="radio" value="2"/>
+                                  <label for="Wheel_na" class="disabled" onclick="">Maybe</label>
+
+                                  <input id="Wheel_off" name="isWheelchairAccess" type="radio" value="0"/>
+                                  <label for="Wheel_off" onclick="" class="rightRadius">No</label>
+                                </div>
+                                <div class="amenities-item switch-toggle switch-3 switch-candy hotelsAm restAm" id="check_amenities">
+                                  <h5>Valet Parking</h5>
+                                  <input id="Valet_on" name="isValetParkingAvail" type="radio" value="1"/>
+                                  <label for="Valet_on" onclick="" class="leftRadius">Yes</label>
+
+                                  <input id="Valet_na" name="isValetParkingAvail" type="radio" value="2"/>
+                                  <label for="Valet_na" class="disabled" onclick="">Maybe</label>
+
+                                  <input id="Valet_off" name="isValetParkingAvail" type="radio" value="0"/>
+                                  <label for="Valet_off" onclick="" class="rightRadius">No</label>
+                                </div>
+                                
+                              </div>
+                            </div>
+                           </div>
+                          <div class="form-group">
+                            <label>Payment</label>
+                            
+                            <div class="check-radio-btn-main clearfix">
+                              
+                              <label class="chkbtn">Cash
+                                <input type="checkbox" id="paymentMode" name="cash">
+                                <span class="checkmark"></span>
+                              </label>
+                              
+                              <label class="chkbtn">Card
+                                <input type="checkbox" id="paymentMode" name="creditcard">
+                                <span class="checkmark"></span>
+                              </label>
+                              
+                              <label class="chkbtn">Mobile Wallet
+                                <input type="checkbox" id="paymentMode" name="wallet">
+                                <span class="checkmark"></span>
+                              </label>
+                              
+                            </div>
+                            
+                           </div>
+                          
+                          <div class="form-group">
+                            <label>Parking</label>
+                            
+                            <div class="check-radio-btn-main clearfix">
+                              
+                              <label class="chkbtn">Yes
+                                <input type="radio" value="1" id="check_parking" name="isParkingAvail">
+                                <span class="checkmark"></span>
+                              </label>
+                              
+                              <label class="chkbtn">No
+                                <input type="radio" value="0" id="check_parking" name="isParkingAvail">
+                                <span class="checkmark"></span>
+                              </label>
+                            </div>
+                            <div class="check-radio-btn-main wheelers_avail clearfix" style="display:none">
+                            <h2>For:</h2>
+                              <div class="check-parking-main 2_wheel">
+                                <div class="check-parking-item clearfix">
+                                  <label class="chkbtn">2 Wheelers
+                                    <input type="checkbox" value="two-wheeler" class="parking_wheel" name="isParkingwheel" id="parking-det2">
+                                    <span class="checkmark"></span>
+                                  </label>
+                                </div>
+                                <div class="check-parking-expand parking-det2" style="display:none">
+                                  <div class="row parking-det2-add" id="add_more_pak">
+                                    <div class="col-md-4 col-sm-4 col-lg-4 col-xs-12">
+                                      <div class="form-group">
+                                        <label>Cost(in ₹)</label>
+                                        <input type="text" class="form-control parking_cost" name="parking_cost" placeholder="50">
+                                       </div>
+                                    </div>
+                                    <div class="col-md-4 col-sm-4 col-lg-4 col-xs-12">
+                                      <div class="form-group">
+                                        <label>Range</label>
+                                        <input type="text" class="form-control parking_rangeFrom" name="parking_rangeFrom" placeholder="0">
+                                       </div>
+                                    </div>
+                                    <div class="col-md-4 col-sm-4 col-lg-4 col-xs-12">
+                                      <div class="form-group">
+                                        <label>Unit</label>
+                                        <input type="text" class="form-control parking_unit" name="parking_unit"  placeholder="hours">
+                                       </div>
+                                    </div>
+                                  </div>
+                                  <a href="javascript:void(0)" id="addMore" onclick="$($(\'.new_parking_form\').html()).insertBefore(this);">
+                                            <i class="material-icons">add</i> 
+                                            <span>Add Parking Hours</span>
+                                          </a>
+                                </div>
+                              </div>
+                              <div class="check-parking-main 3_wheel">
+                                <div class="check-parking-item clearfix">
+                                  <label class="chkbtn">3 Wheelers
+                                    <input type="checkbox" value="three-wheeler" class="parking_wheel" name="isParkingwheel" id="parking-det3">
+                                    <span class="checkmark"></span>
+                                  </label>
+                                </div>
+                                <div class="check-parking-expand parking-det3" style="display:none">
+                                  <div class="row parking-det3-add">
+                                    <div class="col-md-4 col-sm-4 col-lg-4 col-xs-12">
+                                      <div class="form-group">
+                                        <label>Cost(in ₹)</label>
+                                        <input type="text" class="form-control parking_cost" name="parking_cost" placeholder="50">
+                                       </div>
+                                    </div>
+                                    <div class="col-md-4 col-sm-4 col-lg-4 col-xs-12">
+                                      <div class="form-group">
+                                        <label>Range</label>
+                                        <input type="text" class="form-control parking_rangeFrom" name="parking_rangeFrom" placeholder="0">
+                                       </div>
+                                    </div>
+                                    <div class="col-md-4 col-sm-4 col-lg-4 col-xs-12">
+                                      <div class="form-group">
+                                        <label>Unit</label>
+                                        <input type="text" class="form-control parking_unit" name="parking_unit" placeholder="hours">
+                                       </div>
+                                    </div>
+                                  </div>
+                                  <a href="javascript:void(0)" id="addMore" onclick="$($(\'.new_parking_form\').html()).insertBefore(this);">
+                                            <i class="material-icons">add</i> 
+                                            <span>Add Parking Hours</span>
+                                          </a>
+                                </div>
+                              </div>
+                              <div class="check-parking-main 4_wheel">
+                                <div class="check-parking-item clearfix">
+                                  <label class="chkbtn">4 Wheelers
+                                    <input type="checkbox" value="four-wheeler" class="parking_wheel" name="isParkingwheel" id="parking-det4">
+                                    <span class="checkmark"></span>
+                                  </label>
+                                </div>
+                                <div class="check-parking-expand parking-det4" style="display:none">
+                                  <div class="row parking-det4-add">
+                                    <div class="col-md-4 col-sm-4 col-lg-4 col-xs-12">
+                                      <div class="form-group">
+                                        <label>Cost(in ₹)</label>
+                                        <input type="text" class="form-control parking_cost" name="parking_cost" placeholder="50">
+                                       </div>
+                                    </div>
+                                    <div class="col-md-4 col-sm-4 col-lg-4 col-xs-12">
+                                      <div class="form-group">
+                                        <label>Range</label>
+                                        <input type="text" class="form-control parking_rangeFrom" name="parking_rangeFrom" placeholder="0">
+                                       </div>
+                                    </div>
+                                    <div class="col-md-4 col-sm-4 col-lg-4 col-xs-12">
+                                      <div class="form-group">
+                                        <label>Unit</label>
+                                        <input type="text" class="form-control parking_unit" name="parking_unit" placeholder="hours">
+                                       </div>
+                                    </div>
+                                  </div>
+                                  <a href="javascript:void(0)" id="addMore" onclick="$($(\'.new_parking_form\').html()).insertBefore(this);">
+                                            <i class="material-icons">add</i> 
+                                            <span>Add Parking Hours</span>
+                                          </a>
+                                </div>
+                              </div>
+                            </div>
+                           </div>
+                           <div class="new_parking_form" style="display:none;">
+                           <div class="row">
+                            <div class="col-md-4 col-sm-4 col-lg-4 col-xs-12">
+                              <div class="form-group">
+                                <label>Cost(in ₹)</label>
+                                <input type="text" class="form-control parking_cost" name="parking_cost" placeholder="50">
+                               </div>
+                            </div>
+                            <div class="col-md-4 col-sm-4 col-lg-4 col-xs-12">
+                              <div class="form-group">
+                                <label>Range</label>
+                                <input type="text" class="form-control parking_rangeFrom" name="parking_rangeFrom" placeholder="0">
+                               </div>
+                            </div>
+                            <div class="col-md-4 col-sm-4 col-lg-4 col-xs-12">
+                              <div class="form-group">
+                                <label>Unit</label>
+                                <input type="text" class="form-control parking_unit" name="parking_unit"  placeholder="hours">
+                               </div>
+                            </div>
+                           </div>
+                           </div>
+                           <div class="form-group" id="happyhr">
+                            <label>Happy hours</label>
+                            
+                            <div class="check-radio-btn-main clearfix">
+                              
+                              <label class="chkbtn">Yes
+                                <input type="radio" value="1" id="check_happyhr" name="isHappyHours">
+                                <span class="checkmark"></span>
+                              </label>
+                              
+                              <label class="chkbtn">No
+                                <input type="radio" value="0" id="check_happyhr" name="isHappyHours">
+                                <span class="checkmark"></span>
+                              </label>
+                              
+                            </div>
+                            <div class="form-group clearfix" id="openhrs_data_happy" style="display:none;">
+                              <label>Add Hours</label>
+                              <div id="operatingtimesdivHappy"> </div>
+                                  </div>
+                            
+                           </div>
+                          
+                        <form id="add_form">  
+                          <div class="form-group" id="iscost">
+                            <label>Cost(in ₹)</label>
+                            <input type="text" name="cost" class="form-control" placeholder="Add Cost per Person">
+                           </div>
+                          <div class="form-group" id="iscuisine">
+                            <label>Cuisine</sup></label>
+                            <input type="text" name="cuisine" class="form-control" placeholder="Type Cuisine">
+                           </div>
+                           <div class="form-group" id="isRating">
+                            <label>Rating</sup></label>
+                            <div class="rating_star_wrap_add clearfix">
+                                          <div class="rating_star">';
+                                              for ($i = 0; $i < $rating ; $i++) 
+                                              { 
+                                                  $html.='<span id="'.($i+1).'-star"><i class="fa fa-star"></i></span>';
+                                              }
+                                              for ($j = 0; $j < (5-$rating); $j++) 
+                                              { 
+                                                  $html.='<span id="'.(($rating)+($j+1)).'-star"><i class="fa fa-star-o"></i></span>';
+                                              }
+                                              if(!empty($rating))
+                                              {
+                                                  $html .='<span id="star-point" data-point="'.$rating.'">'.$rating.'/5</span>';
+                                              }
+                                          $html.=
+                                          '</div>
+                                          <div class="rating_star_count" name="rating" style="display:none"></div>
+                                      </div>
+                           </div>
+                           <!--input type="file" id="add_photos" name="addplaceImage[]" accept="image/x-png,image/gif,image/jpeg" style="display:none"-->
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                </div>
+          
+                <div class="form-group upload-img-sec clearfix" id="upload-img-sec">
+                <div class="widgetAddImg" onclick="mmi_image(\'addp\')">
+                  <a class="widgetDescTrig cusr">
+                  <i class="material-icons">add_a_photo</i>
+                  <p>Add Image</p>
+                  </a>
+                </div>
+                <input onchange="imageNew(this.id)" type="file" id="add_img0" name="file[]" accept="image/x-png,image/gif,image/jpeg" data-user="" style="display:none">
+                <div class="add-img-block">
+                </div>
+               </div>
+              <div class="note-rate" style="float:left; margin-top: 0px;"><strong><i class="fa fa-info-circle"></i></strong> <span>The overall size of images should be less than 2 MB.</span></div>
+
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-default add-place-btn" data-dismiss="modal">Submit</button>
+              <button type="button" class="btn btn-default add-place-cncel" data-dismiss="modal" style="display:none" onclick="$(\'.add-hours-main,.add-place-cncel,.add-place-del\').hide();$(\'.add-place-main,.add-place-btn\').show();">cancel</button>
+          <button type="button" class="btn btn-default add-place-del" data-dismiss="modal" style="display:none">Done</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+                    
+      <script>
+      count_day=0,happy_count=0; 
+      $(document).off("click", "#1-star,#2-star,#3-star,#4-star,#5-star");
+          $(document).on("click", "#1-star,#2-star,#3-star,#4-star,#5-star", function(event)
+          {
+              var star = $(this).attr(\'id\');
+              switch(star) 
+              {
+                  case \'1-star\':
+                      var ratHml = 
+                      \'<span id="1-star"><i class="fa fa-star"></i></span>\'+
+                      \'<span id="2-star"><i class="fa fa-star-o"></i></span>\'+
+                      \'<span id="3-star"><i class="fa fa-star-o"></i></span>\'+
+                      \'<span id="4-star"><i class="fa fa-star-o"></i></span>\'+
+                      \'<span id="5-star"><i class="fa fa-star-o"></i></span>\'+
+                      \'<span id="star-point"></span>\';
+                      $(\'.rating_star\').html(ratHml);
+                      $(\'#star-point\').attr(\'data-point\',1).text("1/5");
+                      $(\'.rating_star_count\').val(\'1\');
+                      break;
+                  case \'2-star\':
+                      var ratHml = 
+                      \'<span id="1-star"><i class="fa fa-star"></i></span>\'+
+                      \'<span id="2-star"><i class="fa fa-star"></i></span>\'+
+                      \'<span id="3-star"><i class="fa fa-star-o"></i></span>\'+
+                      \'<span id="4-star"><i class="fa fa-star-o"></i></span>\'+
+                      \'<span id="5-star"><i class="fa fa-star-o"></i></span>\'+
+                      \'<span id="star-point"></span>\';
+                      $(\'.rating_star\').html(ratHml);
+                      $(\'.write_post,.write_post_mobile\').removeClass(\'write_post_disable\').removeAttr(\'disabled\');
+                      $(\'#star-point\').attr(\'data-point\',2).text("2/5");
+                      $(\'.rating_star_count\').val(\'2\');
+                      break;
+                  case \'3-star\':
+                      var ratHml = 
+                      \'<span id="1-star"><i class="fa fa-star"></i></span>\'+
+                      \'<span id="2-star"><i class="fa fa-star"></i></span>\'+
+                      \'<span id="3-star"><i class="fa fa-star"></i></span>\'+
+                      \'<span id="4-star"><i class="fa fa-star-o"></i></span>\'+
+                      \'<span id="5-star"><i class="fa fa-star-o"></i></span>\'+
+                      \'<span id="star-point"></span>\';
+                      $(\'.rating_star\').html(ratHml);
+                      $(\'.write_post,.write_post_mobile\').removeClass(\'write_post_disable\').removeAttr(\'disabled\');
+                      $(\'#star-point\').attr(\'data-point\',3).text("3/5");
+                      $(\'.rating_star_count\').val(\'3\');
+                      break;
+                  case \'4-star\':
+                      var ratHml = 
+                      \'<span id="1-star"><i class="fa fa-star"></i></span>\'+
+                      \'<span id="2-star"><i class="fa fa-star"></i></span>\'+
+                      \'<span id="3-star"><i class="fa fa-star"></i></span>\'+
+                      \'<span id="4-star"><i class="fa fa-star"></i></span>\'+
+                      \'<span id="5-star"><i class="fa fa-star-o"></i></span>\'+
+                      \'<span id="star-point"></span>\';
+                      $(\'.rating_star\').html(ratHml);
+                      $(\'.write_post,.write_post_mobile\').removeClass(\'write_post_disable\').removeAttr(\'disabled\');
+                      $(\'#star-point\').attr(\'data-point\',4).text("4/5");
+                      $(\'.rating_star_count\').val(\'4\');
+                      break;
+                  case \'5-star\':
+                      var ratHml = 
+                      \'<span id="1-star"><i class="fa fa-star"></i></span>\'+
+                      \'<span id="2-star"><i class="fa fa-star"></i></span>\'+
+                      \'<span id="3-star"><i class="fa fa-star"></i></span>\'+
+                      \'<span id="4-star"><i class="fa fa-star"></i></span>\'+
+                      \'<span id="5-star"><i class="fa fa-star"></i></span>\'+
+                      \'<span id="star-point"></span>\';
+                      $(\'.rating_star\').html(ratHml);
+                      $(\'.write_post,.write_post_mobile\').removeClass(\'write_post_disable\').removeAttr(\'disabled\');
+                      $(\'#star-point\').attr(\'data-point\',5).text("5/5");
+                      $(\'.rating_star_count\').val(\'5\');
+                      break;
+              }
+              event.preventDefault();
+          });
+        
+            $(".addp-user-sugg").show();
+      $(".panel-body").click(function(){$(".as-results").hide();});
+      $("#modal_new").click(function(){$(".businessTextLayer,.mas_categories").hide();});
+      $("#operatingtimesdiv,#operatingtimesdivHappy").html("");
+            var openHrsMode;
+            var parkingMode,cat_status;
+      var zoom = map.getZoom();
+            var rurl = "https://apis.mapmyindia.com/advancedmaps/v1/8727720dbf670c1b3384bd4b685756ca/still_image?center='.$lat.','.$lng.'" + "+&zoom=" + zoom + "&size=800x500&ssf=0&markers='.$lat.','.$lng.'";
+            $(".addp-map-pic img").attr("src", rurl);
+
+      var openhoursiscreated = false;
+            $(document).off("click", "input[name=open_hours]");
+            $(document).on("click", "input[name=open_hours]", function () {
+                if ($("#selectedhours").is(":checked")) {
+                    $("#operatingtimesdiv").show();
+                    $("#openhoursdiv").show();
+                    if (openhoursiscreated == false) {
+                        openhoursiscreated = true
+                    }
+                }
+                else {
+                    $("#operatingtimesdiv").hide();
+                    $("#openhoursdiv").hide();
+                }
+            });
+      
+      $(document).off("click", "#aopenhours");
+      $(document).on("click", "#aopenhours", function () {
+                setTimeout(function () {
+                    if($("#operatingtimesdiv .bus-app-block").length === 1){
+                        $(".A1").show(); 
+                    }else{
+                        $(".A1").hide(); 
+                    }
+                }, 100);
+                
+                var $openingdays = $("#openingdays").html();
+                $("#operatingtimesdiv").append($openingdays);
+                $("#operatingtimesdiv .bus-app-block").each(function () {
+                    if($(this).find("p.multiSel").html() == ""){
+                        $(this).find(".hida").show();
+                    }
+                });
+                return false;
+      });
+
+      function addHrsClose(id){
+        setTimeout(function (){
+          if($("#operatingtimesdiv .bus-app-block").length === 1){
+            $(".A1").show(); 
+          }else{
+            $(".A1").hide(); 
+          }
+        },100);
+      
+        var rmLen = $(id).parent().find("p.multiSel span").length;
+        count_day = count_day - rmLen;
+        $(id).parent().remove();
+        if(count_day<7){
+          $("#Select_all").prop("checked",false);
+        }
+        if(count_day==7){
+          $("#openhoursdiv").hide();
+        }else{
+          $("#openhoursdiv").show();
+        }
+        return false;
+      }
+
+            $(document).on("click", "#check_parking", function()
+      {
+        var happyhrs = $("input[name=isParkingAvail]:checked").val();
+        if(happyhrs == 1)
+        {
+          $(".wheelers_avail").show();
+
+        }else{
+          $(".wheelers_avail").hide();
+        }
+      });
+
+      $(document).on("click", ".parking_wheel", function()
+      {
+        if ($(this).is(":checked")) 
+        {
+          var pk_val = $(this).attr("id");
+          $("."+pk_val).show();
+
+        }else{
+          var pk_val = $(this).attr("id");
+          $("."+pk_val).hide();
+        }
+      });
+
+      $(document).on("click", "#check_happyhr", function()
+      {
+        var happyhrs = $("input[name=isHappyHours]:checked").val();
+        if(happyhrs == 1)
+        {
+          $("#openhrs_data_happy").show();
+          $("#operatingtimesdivHappy").html("").show();
+            var $openingdays = $("#openingdays").html();
+                  $("#operatingtimesdivHappy").append($openingdays);
+          $("#operatingtimesdivHappy").find(".add-hrs-close").hide();
+          populate(\'#operatingtimesdivHappy .timeSelectopen\');populate(\'#operatingtimesdivHappy .timeSelectclose\');
+          $("#operatingtimesdivHappy .A1").hide();
+          $("#operatingtimesdivHappy .hida").show();
+        }else{
+          $("#openhrs_data_happy").hide();
+          $("#operatingtimesdivHappy").hide();
+          happy_count=0;
+        }
+      });
+  
+      $("#cat_int").click(function(event){
+        event.stopPropagation();
+        $(".mas_categories").show();
+      });
+
+      $(".infoInfo").click(function(event){
+        event.stopPropagation();
+        if ($(\'.businessTextLayer\').css(\'display\') == \'none\') 
+        { 
+          $(\'.businessTextLayer\').css(\'display\',\'block\'); 
+        }else 
+        {
+          $(\'.businessTextLayer\').css(\'display\',\'none\');
+        }
+      });
+      
+        function CheckListed(txtSearch) {
+             var objList = document.getElementById("categories");
+             var liList = objList.getElementsByTagName("li");
+             var navbar = document.getElementById("categories").querySelectorAll(\'li\');
+             navbar.forEach((item, index) => { 
+          if ($(item).html().trim().toUpperCase() == txtSearch.trim().toUpperCase()) {
+                  $("#errlbluplcoption").hide();cat_status = false;
+                    return false; 
+              }else{
+           cat_status = true;
+                if (!$(\'#cat_int\').val() || cat_status) {
+                      $("#errlbluplcoption").text("Please select a valid place category");
+                      $("#errlbluplcoption").show();
+                      $("#lblplace_cat").addClass("error-bdr");
+            $(".sub_categories").html("<option value=\'\' selected disabled=\'disabled\'>Select Subcategory</option>");
+                      $("#loader").hide();
+                      err = true;
+                      return false;
+                  }
+              }
+      });
+      $(".show_name_subcat,#addAddressBlock,#addContactBlock,#addInfoBlock").hide();
+            }
+
+      var totalFileSize = 0;
+      $(\'.add-img-block\').html("");
+
+      var subCat="";
+      $(".sub_categories").change(function() {
+          subCat = $(this).val();
+          if(subCat=="LCSIHS") $("#lblplace_name").html("Name <span style=\'font-size:10px;color:#757575;\'>(Optional)</span>");
+          else $("#lblplace_name").html("Name<sup>*</sup>");
+      });
+      var gt_cat;
+        function changeCat(r_type)
+        { debugger;
+          $("#errlbluplcoption").hide();
+          cat_status=false;
+        var mastCat = $("#categories").find("li[value="+$("#cat_int").val()+"]").attr("id");
+        var index = $("#categories").find("li[value="+$("#cat_int").val()+"]").attr("data-cnt");
+        if(gt_cat)  gt_cat.abort();
+        
+          gt_cat=$.post(\'userAuth?catCode\', en.code({\'mamth\':\'catCode\',\'cat\':mastCat,\'catIndex\':index}), function (data)
+          {
+            var option_sel="";
+                data = JSON.parse(data);
+                if(data.response)
+                {
+                  $.each(data.response, function (i, cat) {
+                        option_sel += "<option id="+cat.childName+" value="+cat.childCode+">"+cat.childName+"</option>";
+                      });
+                      $(".sub_categories").html(option_sel);
+                }
+                else  $("#loader").hide();
+            });
+        
+        $("#amenities_main,#openhrs_data,#addAddressBlock,#addContactBlock,#addInfoBlock,.show_name_subcat").show();
+          if(mastCat == "DINFOD")
+          {
+            $("#happyhr,#iscuisine,#iscost,#isRating").show();
+          $(".amenities-item").each(function() 
+            {       
+              if ($(this).hasClass("restAm")) 
+              {  
+                $(".restAm").show();        
+              } else {
+                $(".amenities-item").hide();  
+              }  
+          });  
+          }
+          else
+          {
+            $("#happyhr,#iscuisine,#iscost,#isRating").hide();
+            if(mastCat == "RESLCS") $("#openhrs_data,#addInfoBlock").hide();
+            if(mastCat=="HOT123") $("#isRating").show(); else $("#isRating").hide();
+            $(".amenities-item").each(function() 
+            {       
+              if ($(this).hasClass("hotelsAm")) 
+              {  
+                $("#amenities_main").show();    
+                $(".hotelsAm").show();        
+              } else {
+                $(".amenities-item").hide();  
+              }  
+          }); 
+          }
+          $("#operatingtimesdiv").html("");
+          var $openingdays = $("#openingdays").html();
+                $("#operatingtimesdiv").append($openingdays);
+          populate(\'.timeSelectopen\');populate(\'.timeSelectclose\');
+        }
+
+            $(document).on("click", "#btntest", function () {
+                $(this).parent().parent().remove();
+                removeErrLabels();
+                
+            });
+
+            $(document).on("click", ".24hours", function () {
+                var parentdiv = $(this).parent().parent().parent().parent();
+                if($(parentdiv).find("p.multiSel").html() =="") {
+                    show_error("Please select valid days!");
+                    return false;
+                }
+                if ($(this).is(":checked")) {
+                    var div = $(this).parent().parent().parent();
+                    $(div).find("select").attr("disabled", "disabled");
+                    $(div).find("select").addClass("disableseladd");
+                }
+                else if (!$(this).is(":checked")) {
+                    var div = $(this).parent().parent().parent();
+                    $(div).find("select").removeAttr("disabled");
+                    $(div).find("select").removeClass("disableseladd");
+                }
+            });
+      
+      $(document).on("change", ".timeselectionBtn", function () {
+                var parentdiv = $(this).parent().parent().parent();
+                if($(parentdiv).find("p.multiSel").html() =="") {
+                    show_error("Please select valid days!");
+                    $(this).val("");
+                    return false;
+                }
+            });
+
+            function backtoHome() 
+            {
+                $("#add_place_step01").show();
+                $("#pullleft").show();
+                $("#pullright").show();
+                $(".addp-action-searchbar-sec").hide();
+                $(".search-addp-map-result").hide();
+                $("#add_place_mob_map").hide();
+                $(".add_a_place_form").removeClass("pad0");
+            }
+            $(document).on("click", ".addp-back-btn", function (event) 
+            {
+        $(\'#modal_new\').hide().html(\'\');
+        close_eloc(\'dr\');
+                /*home(1);*/
+            });
+
+            $(document).on("click", "#markLoc,#nearbyland", function (event) {
+              var center = map.getCenter();
+              map.setActiveArea(\'map\');
+              $("#uap_tap_dv #eloc_tap_dv,#success_sec").hide();
+              $(".reportTrig").hide();
+                      $("#uap_tap_dv span").show();
+              try{
+                var latlngml=$("#nearbyland").val();
+                var latlng =latlngml.split(",");
+                var lat=latlng[0];
+                var long=latlng[1];
+                }
+                catch(err){ alert(err) }
+                if(typeof long=="undefined" || isNaN(long) ){
+                var lat = $("input[name=place_lat]").val();
+                var long = $("input[name=place_lon]").val();
+                }
+                      var cood = lat+\',\'+long;
+                      map.setView([lat, long],18);
+                    var r_type = $(".mas_categories").attr("data-user");
+                    if(r_type=="Business"){
+                        $(".addp-web-onmap-sec").show();
+                        $(".addp-web-addr-block").hide();
+                        $(".addp-user-sugg-list").find("li:eq(0)").hide();
+                        $(".addp-user-sugg-list li").css("width","50%")
+              }
+        
+              event.preventDefault();
+              removeErrLabels();
+                  });
+
+      $(document).on("click", ".add-place-btn", function (event) 
+            {
+                if(addpValidationsStep0())
+            {
+                showConfirmation(false,"adduap");
+            }
+            });
+            
+            
+            function removeErrLabels() {
+                var fieldcount = 0;
+                $("#errlblupaddcstm").text("");
+                $("#aap_btn_lbl").removeClass("error-bdr");
+
+                $("#errlbluplcnme").text("");
+                $("#lblplace_name").removeClass("error-bdr");
+
+                $("#uaperrlblemail").text("");
+        $("#uaplblulineemail").removeClass("error-bdr");
+        
+        $("#uaperrlblfax").text("");
+                $("#uaplblulinefax").removeClass("error-bdr");
+
+                $("#errlbluplcaddr").text("");
+                $("#lblplaceaddr").removeClass("error-bdr");
+
+                $("#uaperrlblphn").text("");
+                $("#lblulinephn").removeClass("error-bdr");
+
+        $("#errlbluplloc").text("");
+        $("#lblulineloc").removeClass("error-bdr");
+        
+                $("#addpcheckp").text("");
+                $("input:text[id=place_custom_field_data]").each(function ()
+                {
+                    fieldcount = fieldcount + 1;
+                    $("#errlblcstmfld" + fieldcount).text("");
+                    $("#lblcstmfield" + fieldcount).removeClass("error-bdr");
+                });
+            }
+
+            function addpValidationsStep0() 
+            {
+                removeErrLabels();
+                var uapemail = "", place_name = "", err = false, emailRegex = /^([\w+-.%]+@[\w.-]+\.[A-Za-z]{2,4})(,[\w+-.%]+@[\w.-]+\.[A-Za-z]{2,4})*$/, alphaNumDashExp = /^[0-9a-zA-Z\s_\-@\*\&\./]{2,}$/, phoneExp = /^(1?(-?\d{3})-?)?(\d{3})(-?\d{4})$/;
+                var uapphone = "", uapfax ="", faxRegex = /^\+91\d{10}(,\+91\d{10})*$/;
+                uapemail = $("input:text[name=place_email]").val();
+                uapphone = $("input:text[name=place_phoneno]").val();
+        place_name = $("input:text[name=place_name]").val();
+        uapfax = $("input:text[name=place_fax]").val();
+        
+        if (!$(\'#cat_int\').val() || cat_status) {
+                    $("#errlbluplcoption").text("Please select a valid place category");
+                    $("#errlbluplcoption").show();
+                    $(".modal-body").scrollTop(0);
+                    if($("#basicClk").hasClass("collapsed")) $("#basicClk").click();
+                    $("#lblplace_cat").addClass("error-bdr");
+                    $("#loader").hide();
+                    err = true;
+                    return false;
+        }
+        
+                if(subCat!=="LCSIHS" &&(!alphaNumDashExp.test(place_name) || place_name.indexOf("http:/\/") >= 0 || place_name.indexOf("HTTP:/\/") >= 0 || place_name.indexOf("//") >= 0 || !place_name.trim().length))
+                {
+                    $("#errlbluplcnme").text("Please enter a valid place name");
+                    $("#errlbluplcnme").show();
+                    $("#uplace_name").focus();
+                    $("#lblplace_name").addClass("error-bdr");
+                    $("#loader").hide();
+                    if($("#basicClk").hasClass("collapsed")) $("#basicClk").click();
+                    err = true;
+                    return false;
+                }
+
+                if (!$(\'#nearbyland\').val()) {
+                    $("#errlbluplloc").text("Please enter valid location");
+                    $("#errlbluplloc").show();
+                    $("#nearbyland").focus();
+                    $("#lblulineloc").addClass("error-bdr");
+                    $("#loader").hide();
+                    if($("#basicClk").hasClass("collapsed")) $("#basicClk").click();
+                    err = true;
+                    return false;
+        }
+        
+        if (!emailRegex.test(uapemail) && uapemail !== "") {
+                    $("#uaperrlblemail").text("Please enter valid email id");
+                    $("#uaperrlblemail").show();
+                    $("#uapemail").focus();
+                    $("#loader").hide();
+                    $("#uaplblulineemail").addClass("error-bdr");
+                    if($("#contactClk").hasClass("collapsed")) $("#contactClk").click();
+                    return false;
+        }
+        
+        if (!faxRegex.test(uapfax) && uapfax !== "") {
+                    $("#uaperrlblfax").text("Please enter valid fax no. of 13 digits");
+                    $("#uaperrlblfax").show();
+                    $("#uapfax").focus();
+                    $("#loader").hide();
+                    $("#uaplblulinefax").addClass("error-bdr");
+                    if($("#contactClk").hasClass("collapsed")) $("#contactClk").click();
+                    return false;
+                }
+
+                if($("input[name=isParkingAvail]:checked").val()==1 && (!$(".parking_cost").val() || !$(".parking_rangeFrom").val() || !$(".parking_unit").val())){
+                  show_error("Please fill out the Parking details!");
+                    err = true;
+                    return false; 
+                }
+
+        var all_input_file=document.getElementsByName("file[]");
+        var totalFileSize=0;
+        var maxSizeFile = 2000000;
+        
+          for(var i=0;i<all_input_file.length;i++)
+          {
+            var fls=all_input_file[i].files; 
+            if(fls.length>=1) 
+            {
+              totalFileSize+=fls[0].size;
+            }
+          }
+                
+          if(totalFileSize > maxSizeFile)
+              { 
+                    show_error( "Total file size is too large ("+bytes_to_size(totalFileSize)+"). The total file size must be between 0-" + bytes_to_size(maxSizeFile) +" .Please try with smaller </br> files !");
+            err=true;
+          return false;
+        }
+          
+        var open_hours = $("input[name=open_hours]:checked").val();
+                if (open_hours == "open during selected hours") {
+
+          if($("#operatingtimesdiv .bus-app-block").length === 0){
+            show_error("Please select valid days & hours!");
+              err=true;
+              return false;
+          }
+          else
+          {
+            $("#operatingtimesdiv .bus-app-block").each(function () 
+            {
+              if (!$(this).find(".24hours").is(":checked")) {
+                if($(this).find("p.multiSel").html() =="") {
+                  show_error("Please select valid days!");
+                  $(this).val("");
+                  err=true;
+                  return false;
+                }
+
+                if ($(this).find(".timeSelectopen").val()==null || $(this).find(".timeSelectclose").val()== null) 
+                {
+                  show_error("Please select Open/Close timing!"); 
+                  err = true;
+                  return false;
+                }
+              }else{
+                if($(this).find("p.multiSel").html() =="") {
+                  show_error("Please select valid days!");
+                  $(this).val("");
+                  err=true;
+                  return false;
+                }
+              }
+            });
+
+          }
+              }
+        
+        var happyhrs = $("input[name=isHappyHours]:checked").val();
+        if(happyhrs == 1)
+        {
+          $("#operatingtimesdivHappy .bus-app-block").each(function () 
+          {
+            if (!$(this).find(".24hours").is(":checked")) {
+
+              if($(this).find("p.multiSel").html() =="") {
+                show_error("Please select valid days!");
+                $(this).val("");
+                err=true;
+                return false;
+              }
+
+              if ($(this).find(".timeSelectopen").val()==null || $(this).find(".timeSelectclose").val()== null) 
+              {
+                show_error("Please select Open/Close timing!"); 
+                err = true;
+                return false;
+              }
+            }else{
+              if($(this).find("p.multiSel").html() =="") {
+                show_error("Please select valid days!");
+                $(this).val("");
+                err=true;
+                return false;
+              }
+            }
+          });
+        }
+
+                if (err)
+                    return false;
+                else {
+                    removeErrLabels();
+                    return true;
+                }
+            }
+
+            function addpValidationsStep1() {
+                removeErrLabels();
+                fieldcount = 0, err = false, place_address = "", form = $("form")[0], phoneExp = /^\d{11}$/, uapphone = "",uapemail="";
+                uapemail = $("input:text[name=place_email]").val();
+                uapphone = $("input:text[name=place_phoneno]").val();
+
+                if (err)
+                    return false;
+                else {
+                    removeErrLabels();
+                    return true;
+                }
+            }
+
+            function uap_tap_action() {
+                    if ($("#uap_tap_dv").css("display") != "none") {
+                        map.closePopup();
+                        var center = map.getCenter();
+                        if (xhr !== null) {
+                            xhr.abort();
+                            xhr = null;
+                        }
+                        xhr = $.ajax({url: "get_click_revg?" + center.lat + "&" + center.lng + "&" + map.getZoom() + "&" + "2"}).done(function (data) {
+                            if (data === "[]") {
+                                window.location.reload();
+                                return false;
+                            }
+                            if (data != "") {
+                                var json = JSON.parse(data);
+                                var res_user_added_place = json.user_add_place;
+                                populateaddPlcForm(center.lat, center.lng, res_user_added_place);
+
+                            }
+                        });
+                    }
+            }
+
+            function populateaddPlcForm(lat, lng, placedata) {
+              var place_locality, place_district, place_state, place_pincode, place_address, place_city, place_dist;
+                if (lat != "" & lng != "" & placedata != "") {
+                    var user_added_place = placedata.split("|");
+                    poi = user_added_place[2];
+                    place_id = user_added_place[17];
+                    $("#uap_tap_dv #eloc_tap_dv,#success_sec").show();
+                    $("#uap_tap_dv span").hide();
+                    if (place_id == "") {
+                        $("input[name=place_locality]").val("");
+                        $("input[name=place_district]").val("");
+                        $("input[name=place_state]").val("");
+                        $("input[name=place_pincode]").val("");
+                        $("textarea[name=place_address]").val("")
+                        $("input[name=place_city]").val("");
+                    } else {
+                        place_locality = user_added_place[8];
+                        place_district = user_added_place[12];
+                        place_city = user_added_place[12];
+                        place_state = user_added_place[13];
+                        place_pincode = user_added_place[14];
+                        place_dist = user_added_place[18];
+                        place_address = user_added_place[19].split(".");
+                        $("input[name=place_locality]").val(place_locality);
+                        $("input[name=place_district]").val(place_district);
+                        $("input[name=place_state]").val(place_state);
+                        $("input[name=place_pincode]").val(place_pincode);
+                        $("textarea[name=place_address]").val(place_address[0]);
+                        $("input[name=place_city]").val(place_city);
+                        $("#indexplacename_bus").html(poi);
+                        $("#indexplaceaddr_bus").html(place_address[0]);
+                    }
+                    var zoom = map.getZoom();
+                var rurl = "https://apis.mapmyindia.com/advancedmaps/v1/8727720dbf670c1b3384bd4b685756ca/still_image?center=" + lat + "," + lng + "&zoom=" + zoom + "&size=800x500&ssf=0&markers=" + lat + "," + lng;
+                $(".addp-map-pic img").attr("src", rurl);
+                    $("input[name=place_lat]").val(lat);
+                    $("input[name=place_lon]").val(lng);
+
+          if(poi) $("#nearbyland").val(poi); else $("#nearbyland").val(place_address[0]); 
+          if(lat && lng && $("#nearbyland").val()!="") $("#errlbluplloc").hide(); 
+                }   
+            }
+        
+        </script>
+    ';
+$html.=<<<RTXT
+<script>
+    function save_UAP() 
+        {debugger;
+            var customfieldjson = "", addhoursjson = "",form = $("#uapform")[0],place_type="",uapemail="";
+            var addhoursObj = {}, addhappyObj = {}, addarray=[], openHrsHppyMode={};
+            var mastCat = $("#categories").find("li[value="+$("#cat_int").val()+"]").attr("id");
+            place_type = (mastCat == "RESLCS" ? 0 : 1);
+            uapemail = $("input:text[id=uapemail]").val();
+            var p_name=$("input:text[id=uplace_name]").val();
+            var p_lon=$("input:text[id=place_lon]").val();
+            var p_lat=$("input:text[id=place_lat]").val();
+            var p_addr=$("input:text[id=uplaceaddr]").val();
+
+
+            var myObj = {}, myPay = {};
+            $(".amenities-item input").each(function () 
+            {
+              var name_new = $(this).attr("name");
+              myObj[$(this).attr("name")] = $("input[name="+name_new+"]:checked").val() ? $("input[name="+name_new+"]:checked").val() :null;
+                
+            });
+            myObj["isHappyHours"] = $("input[name=isHappyHours]:checked").val() ? $("input[name=isHappyHours]:checked").val() :null;
+            myObj["isParkingAvail"] = $("input[name=isParkingAvail]:checked").val() ? $("input[name=isParkingAvail]:checked").val() :null;
+            $("#operatingtimesdivHappy .bus-app-block").each(function (index, item) 
+            {
+        var div = $(this);
+                $(this).find(".multiSel span").each(function () 
+                {
+                  var id_day = $(this).attr("id");
+                  var addtimeObj = {},addArrayHpytime=[];
+                  var openClose = "7:00 ";
+                    if (div.find(".timeSelectopen").hasClass("disableseladd") && div.find(".timeSelectclose").hasClass("disableseladd")) 
+          {
+            /*addArrayHpytime.push(null);return false;*/
+            addArrayHpytime.push({opens:openClose+"AM",closes:openClose+"AM"});
+                    } else {
+                      addArrayHpytime.push({opens:$("#operatingtimesdivHappy .bus-app-block:eq("+index+")").find(".timeSelectopen option:selected").text(),closes:$("#operatingtimesdivHappy .bus-app-block:eq("+index+")").find(".timeSelectclose option:selected").text()});  
+                    }
+                  addhappyObj[id_day.toLowerCase()]=addArrayHpytime;
+                });
+            });
+            openHrsHppyMode = JSON.stringify(addhappyObj);
+            addarray.push(openHrsHppyMode);
+            /*myObj["happyHoursDetails"] = addarray;*/
+      var addwheelObj = [];
+            $("input:checkbox[name=isParkingwheel]").each(function () 
+            {
+                if ($(this).is(":checked")) {
+                  var parking_divv = $(this).attr("id");
+          var parking_unit,addArrayWheeltime=[];;
+          $("."+parking_divv+" .row").each(function (index, item) 
+                  {
+                    var parking_cost = $("."+parking_divv+" .row:eq("+index+") .parking_cost").val();
+            var parking_from = $("."+parking_divv+" .row:eq("+index+") .parking_rangeFrom").val();
+            var parking_to = $("."+parking_divv+" .row:eq("+index+") .parking_rangeTo").val();
+            parking_unit = $("."+parking_divv+" .row:eq("+index+") .parking_unit").val();
+
+            addArrayWheeltime.push({"rateUnitRange": "0-"+parking_from,"rateUnitCost": parking_cost});
+          });
+          addwheelObj.push({"vehicleType": $(this).attr("value"),"rateUnitType": parking_unit,"rateUnitRanges": addArrayWheeltime});
+        }
+            });
+            parkingMode = JSON.stringify(addwheelObj);
+            $("input:checkbox[id=paymentMode]").each(function () 
+            {
+              if ($(this).is(":checked"))
+        {
+          myPay[$(this).attr("name")] = 1;
+        }else{
+          myPay[$(this).attr("name")] = null;
+        }
+                
+            });
+            if (myObj != {})
+                customfieldjson_new = JSON.stringify(myObj);
+        paymentMode = JSON.stringify(myPay);
+            
+
+            if(!$("#place_lat").val() || !$("#place_lon").val() || !$("#uplaceaddr").val()) show_error("Please enter a valid address");
+            var open_hours = $("input[name=open_hours]:checked").val();
+            var specialTime;
+        if (open_hours == 'open during selected hours') {
+          addhoursObj["specificInterval"]=null;
+              $("#operatingtimesdiv .bus-app-block").each(function (index, item) 
+              {
+                  var div = $(this);
+                  $(this).find(".multiSel span").each(function () 
+                  {
+                    var id_day = $(this).attr("id");
+                    var addtimeObj = {},addArraytime=[];
+                    var openClose = "7:00 ";
+                      if (div.find(".timeSelectopen").hasClass("disableseladd") && div.find(".timeSelectclose").hasClass("disableseladd")) 
+            {
+                          addArraytime.push({opens:openClose+"AM",closes:openClose+"AM"});
+                      } else {
+                        addArraytime.push({opens:$("#operatingtimesdiv .bus-app-block:eq("+index+")").find(".timeSelectopen option:selected").text(),closes:$("#operatingtimesdiv .bus-app-block:eq("+index+")").find(".timeSelectclose option:selected").text()}); 
+                      }
+                    addhoursObj[id_day.toLowerCase()]=addArraytime;
+                  });
+              });
+      }
+      else if(open_hours == 'open always'){
+            addhoursObj["specificInterval"]=0;
+            addhoursObj["monday"]=null; 
+            addhoursObj["tuesday"]=null;  
+            addhoursObj["wednesday"]=null;  
+            addhoursObj["thusday"]=null;  
+            addhoursObj["friday"]=null; 
+            addhoursObj["saturday"]=null; 
+            addhoursObj["sunday"]=null;   
+          }else{
+        addhoursObj["specificInterval"]=null;
+      }
+          openHrsMode = JSON.stringify(addhoursObj);
+            
+            var myObj = {};
+            $("input:text[id=place_custom_field_data]").each(function () 
+            {
+                myObj[$(this).attr("name")] = $(this).val();
+            });
+            if (myObj != {})
+                customfieldjson = JSON.stringify(myObj);
+
+            $("#loader").show();
+      var rating = $('.rating_star_count').val();
+            var formData = new FormData(); // using additional FormData object
+      var b = [];             // using an array
+      for(var i = 0; i < document.forms.length; i++){
+          var form = document.forms[i];
+          var data = new FormData(form);
+          var formValues = data.entries()
+          while (!(ent = formValues.next()).done) 
+          { 
+          formData.append(ent.value[0], ent.value[1])
+          }
+      }
+      /*for (var value of formDataImg.entries()) 
+      {
+        formData.append(value[0], value[1]);
+      }*/
+      formData.append("place_type", place_type);
+      formData.append("Category", mastCat);
+      if(place_type == 0)
+      {
+        formData.append("amenities", "");
+            formData.append("paymentMode", "");
+            formData.append("openingHours", "");
+      } else {
+        formData.append("amenities", customfieldjson_new);
+            formData.append("paymentMode", paymentMode);
+            if(!jQuery.isEmptyObject(addhoursObj)) formData.append("openingHours", openHrsMode); else formData.append("openingHours", "");
+            if(!jQuery.isEmptyObject(addhappyObj)) formData.append("happyHrs", addarray); else formData.append("happyHrs", "");
+            if(addwheelObj.length>0) formData.append("parkingDetails", parkingMode); else formData.append("parkingDetails", "");
+      }
+      formData.append("rating",rating);
+          formData.append("mamth", "M150");
+
+      var all_input_file=document.getElementsByName("file[]");
+      cnt = 0;
+      for(var i=0;i<all_input_file.length;i++)
+      {
+        cnt++;
+        var fls=all_input_file[i].files; 
+        if(fls.length>=1) 
+        {
+          formData.append("placefile[]", fls[0]);
+        }
+      }
+
+      if (xhr !== null) 
+            {
+                xhr.abort();
+                xhr = null;
+            }
+            xhr = $.ajax(
+            {
+                url: "userAuth?M150",
+                type: "POST",
+                data: formData,
+                contentType: false,
+                processData: false,
+                cache: false,
+                mimeType:"multipart/form-data",
+                success: function (data) 
+                {
+                    $(".panel-primary").css("z-index","2");
+                    var res = JSON.parse(data);
+                    if (res.response.statusCode == 201) 
+                    {
+                    	$(".addp-thank-main").show();
+                    	$(".add-place-main,.modal-footer").hide();
+                    	var resoure = res.response.response.resourceLocation;
+                    	var eloc = resoure.split("/").slice(-2)[0];
+                          /*var weblink = "http://eloc.me/" + eloc;*/
+                        var weblink = "https://maps.mapmyindia.com/eloc/" + eloc;
+                        $("#signin_add_place").hide();
+                        $(".addp_get_eloc").find("strong").html(eloc);
+                        $(".th-eloc-value").find("span").html("eloc.me/"+eloc);
+                        $(".th-eloc-value span").attr("onclick","$(\'#addpshare\').click();$(\'#modal_new\').hide();");
+                        try{ $("#addptry").attr('onclick', "get_place_details('place-"+encodeURI(p_name)+"-"+eloc+"@zdata="+btoa(formData.get('place_lat')+"+"+formData.get('place_lon')+"+17+"+eloc)+"ed');$('#auto').val('"+p_name+"');$('#modal_new').hide();return false");}catch(e){ $('#addptry').hide();}
+                        $("#addpshare").attr("onclick","share('"+weblink+"');$(\'#error_modal\').attr(\'style\',\'z-index: 999999;display:block;\')");
+                        $("#addpaddanoth").attr("href", "https://maps.mapmyindia.com/add-a-place");
+                        $("#addphead").text("Thank you");
+                        $(".cancel_back,#get-eloc-sec,#get-eloc-sec-bus").hide();
+                        $(".cancel_close").show();
+                        if(mobilecheck())
+                        {
+                            $("#uapbackbtn").attr("name", "cancel");
+                            $("#mobnext").hide();
+                            $("#uapbackbtn > i").removeClass("ti-arrow-circle-left");
+                            $("#uapbackbtn > i").addClass("fa fa-times");
+                            $("#map").insertAfter(".addp-web-onmap-sec");
+                            /*call_url("", ".");*/
+                        }
+
+                        $("#uap_tap_dv").hide();
+                        $("#loader").hide();
+                        return true;
+                    }
+                    else if (res.response.statusCode == "400") {show_error(res.response.data.errors[0].displayMessage);$("#loader").hide();return true;}
+                    else if (res.response.statusCode == "415") 
+                    {
+                        show_error("You have already added a place with same name at this location. Try changing your location or name");
+                        $("#loader").hide();
+                        if (window.mobilecheck()) 
+                        {
+                            $(".with-nav-tabs").show();
+                            $("#map").insertAfter(".addp-web-onmap-sec");
+                            call_url("", ".");
+                        }
+                        /*if (mk)
+                        map.removeLayer(mk);*/
+                        return true;
+                    }
+                    else 
+                    {
+                        show_error("data could not be submitted. Please try again");
+                        /*$("#uapscroll").mCustomScrollbar("destroy");
+                        $("#res_info").html("").hide();*/
+                        $("#uap_tap_dv").hide();
+                        $(".addp-web-onmap-sec").hide();
+                        $("#loader").hide();
+                        if (window.mobilecheck()) 
+                        {
+                            $(".with-nav-tabs").show();
+                            $("#map").insertAfter(".addp-web-onmap-sec");
+                            call_url("", ".");
+                        }
+                        if (mk)
+                            map.removeLayer(mk);
+                        return false;
+                    }
+                }
+            });
+        }
+
+        function categoryFilter(type) { 
+        var input, filter, ul, li, a, i;
+        $(".mas_categories").show();
+        input = document.getElementById("cat_int");
+        filter = input.value.toUpperCase();
+        div = document.getElementById("categories");
+        a = div.getElementsByTagName("li");
+        for (i = 0; i < a.length; i++) {
+            txtValue = $("#categories").find("li:eq("+i+")").html();
+          if (txtValue.toUpperCase().indexOf(filter) > -1) {
+
+            a[i].style.display = "";
+          } else {
+        a[i].style.display = "none";
+          }
+        }
+      CheckListed(filter);
+      return false;
+    }
+
+    function selectliCat(value){ debugger;
+      var type = $(".mas_categories").attr("data-user");
+      $("#cat_int").val(value);
+      changeCat(type);
+    }
+
+    var c=0;
+    var cc=0;
+    function handlecollapse(id)
+    { 
+      if(id.id=="addressClk" && c==0)
+      {
+        c=1;
+        setTimeout(function(){
+        $("#contactClk").find('i').text('keyboard_arrow_up');
+        $("#addMoreClk").find('i').text('keyboard_arrow_down');},50);
+      }
+      if(id.id=="contactClk" && cc==0)
+      {
+        cc=1;
+        setTimeout(function(){
+        if($("#addMoreClk").find("i").html()=="keyboard_arrow_up") $("#addMoreClk").find('i').text('keyboard_arrow_down')},50);
+      }
+      if(id.id=="addMoreClk")
+      {
+        if($("#"+id.id).find("i").html()=="keyboard_arrow_up")
+        {
+          setTimeout(function(){
+          $("#"+id.id).find('i').text('keyboard_arrow_down');},50);
+        }else{
+          setTimeout(function(){
+            $("#basicClk").find('i').text('keyboard_arrow_down');
+            $("#addressClk").find('i').text('keyboard_arrow_down');
+            $("#contactClk").find('i').text('keyboard_arrow_down');},50);
+        } 
+      }
+      if($("#"+id.id).find("i").html()=="keyboard_arrow_up")
+      {
+        setTimeout(function(){
+        $("#"+id.id).find('i').text('keyboard_arrow_down');},50);
+      }else{
+        setTimeout(function(){
+        $("#"+id.id).find('i').text('keyboard_arrow_up');},50);
+      }  
+        
+    }
+
+
+</script>
+RTXT;
+}
+                
+?>
+
 
